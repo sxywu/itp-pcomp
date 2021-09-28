@@ -13,6 +13,7 @@
 #define N_LEDS 12
 #define patternLength 6
 #define buttonLength 3
+#define totalLives 3
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -29,6 +30,7 @@ int inputPattern[patternLength];
 // # input pattern position
 int patternPosition = 0;
 // # an integer starting at 2 of how many lives left
+int numLives = 3;
 // # previous input button states (length 3 of booleans, defaulting to false at start)
 int prevButtonState[buttonLength] = {LOW, LOW, LOW};
 
@@ -49,6 +51,8 @@ void loop() {
 
   //   if pattern is empty, setup pattern
   if (checkArrayEmpty(pattern)) {
+    clearNeopixel();
+    lightupLives();
     setupPattern();
   }
 
@@ -92,13 +96,17 @@ void loop() {
     inputPattern[patternPosition] = buttonPressed - 1;
     patternPosition += 1;
     boolean matches = checkPlayerPattern();
-
-    // if pattern does not match, check number of lives left
+   
     if (!matches) {
-      for (int i = 0; i < 2; i += 1) {
+      // if pattern is wrong, blink red
+      for (int i = 0; i < 1; i += 1) {
         blinkRed();
         delay(250);
       }
+
+      // then check number of lives left
+      numLives -= 1;
+      lightupLives();
     } else if (patternPosition == patternLength) {
       // if player has input all the pattern correctly
       // celebrate!
@@ -109,10 +117,6 @@ void loop() {
     // if more than 1 life, decrease number of lives
     // if only 1 life left, then play the death pattern
     // reset game
-
-    // if pattern does match, check if pattern is complete (input pattern = length 6)
-    // if yes, play celebration pattern, reset game
-    // if no, continue
   }
 }
 
@@ -137,7 +141,6 @@ boolean checkArrayEmpty(int arr[]) {
 
 // function to set up a pattern of random integers of 1, 2, 3
 void setupPattern() {
-  clearNeopixel();
   // loop through pattern array, randomly set number and light up that LED
   for (int i = 0; i < patternLength; i += 1) {
     int ledIndex = random(0, 3072) / 1024;
@@ -174,6 +177,19 @@ boolean checkPlayerPattern() {
   }
 
   return isMatch;
+}
+
+void lightupLives() {
+  for(int i = 0; i < totalLives; i += 1) {
+    if (i < numLives) {
+      // light up that LED
+      strip.setPixelColor(i + 4, strip.Color(0, 0, 255));
+    } else {
+      // clear LED
+      strip.setPixelColor(i + 4, 0);
+    }
+    strip.show();
+  }
 }
 
 void blinkRed() {
