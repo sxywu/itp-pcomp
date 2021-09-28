@@ -22,11 +22,14 @@ const uint32_t ledColors[3] = {strip.Color(255, 128, 0), strip.Color(0, 255, 0),
 const int buttonPins[buttonLength] = {13, 12, 11};
 
 // declare arrays to store state for
-// 1. the pattern (length 6 of integers)
+// # the pattern (length 6 of integers)
 int pattern[patternLength];
-// 2. the player's input pattern so far (max length 6 of integers)
-// 3. an integer starting at 2 of how many lives left
-// 4. previous input button states (length 3 of booleans, defaulting to false at start)
+// # the player's input pattern so far (max length 6 of integers)
+int inputPattern[patternLength];
+// # input pattern position
+int patternPosition = 0;
+// # an integer starting at 2 of how many lives left
+// # previous input button states (length 3 of booleans, defaulting to false at start)
 int prevButtonState[buttonLength] = {LOW, LOW, LOW};
 
 void setup() {
@@ -44,29 +47,32 @@ void loop() {
   // check if reset button is pressed
   // if it is, call resetGame(), return
 
-  // if pattern is empty, setup pattern
-//  if (checkArrayEmpty(pattern)) {
-//    setupPattern();
-//  }
+  //   if pattern is empty, setup pattern
+  if (checkArrayEmpty(pattern)) {
+    setupPattern();
+  }
 
   // loop through all 3 input buttons and see if any were pressed
   // that weren't already pressed.
   // store new button states in button state array
   // light up corresponding light for each pressed button
+  int buttonPressed = 0;
   for (int i = 0; i < buttonLength; i += 1) {
     int buttonReading = digitalRead(buttonPins[i]);
-    
+
     if (buttonReading != prevButtonState[i]) {
       // if button state has changed, light up LED accordingly
       if (buttonReading == HIGH) {
         // if button is pressed, we want to turn on pixel
         strip.setPixelColor(i, ledColors[i]);
+        // and remember it was pressed
+        buttonPressed = i + 1;
       } else if (buttonReading == LOW) {
         // if button is released, turn off pixel
         strip.setPixelColor(i, 0);
       }
       strip.show();
-      
+
       Serial.print(buttonPins[i]);
       Serial.print(" is ");
       Serial.println(buttonReading);
@@ -80,20 +86,28 @@ void loop() {
   // treat that as incorrect and they lose a life
 
   // if none are pressed, return and do nothing
+  if (buttonPressed) {
+    // if one is pressed, add button number to input pattern array
+    // and check whether the patterns match
+    inputPattern[patternPosition] = buttonPressed - 1;
+    patternPosition += 1;
+    boolean matches = checkPlayerPattern();
 
-  // if one is pressed, add button number to input pattern array
-  // and check whether the patterns match
-  boolean matches = checkPlayerPattern();
+    // if pattern does not match, check number of lives left
+    if (!matches) {
+      blinkRed();
+      delay(250);
+      blinkRed();
+      delay(250);
+    }
+    // if more than 1 life, decrease number of lives
+    // if only 1 life left, then play the death pattern
+    // reset game
 
-  // if pattern does not match, check number of lives left
-  // if more than 1 life, decrease number of lives
-  // if only 1 life left, then play the death pattern
-  // reset game
-
-  // if pattern does match, check if pattern is complete (input pattern = length 6)
-  // if yes, play celebration pattern, reset game
-  // if no, continue
-
+    // if pattern does match, check if pattern is complete (input pattern = length 6)
+    // if yes, play celebration pattern, reset game
+    // if no, continue
+  }
 }
 
 void clearNeopixel() {
@@ -118,7 +132,6 @@ boolean checkArrayEmpty(int arr[]) {
 // function to set up a pattern of random integers of 1, 2, 3
 void setupPattern() {
   clearNeopixel();
-  Serial.println("set up pattern");
   // loop through pattern array, randomly set number and light up that LED
   for (int i = 0; i < patternLength; i += 1) {
     int ledIndex = random(0, 3072) / 1024;
@@ -141,7 +154,33 @@ void setupPattern() {
 
 // function to check if player input matches pattern
 boolean checkPlayerPattern() {
+  boolean isMatch = true;
   // loop through input pattern array, check if they match pattern array
+  for (int i = 0; i < patternPosition; i += 1) {
+    Serial.print(patternPosition);
+    Serial.print("\t");
+    Serial.print(pattern[i]);
+    Serial.print(" and ");
+    Serial.println(inputPattern[i]);
+    if (pattern[i] != inputPattern[i]) {
+      isMatch = false;
+    }
+  }
+
+  return isMatch;
+}
+
+void blinkRed() {
+  // make all neopixels blink red
+  for (int i = 0; i < N_LEDS; i += 1) {
+    strip.setPixelColor(i, strip.Color(255, 0, 0));
+  }
+  strip.show();
+  delay(250);
+  for (int i = 0; i < N_LEDS; i += 1) {
+    strip.setPixelColor(i, 0);
+  }
+  strip.show();
 }
 
 // function to reset entire game
