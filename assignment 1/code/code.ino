@@ -95,10 +95,16 @@ void loop() {
 
     // if pattern does not match, check number of lives left
     if (!matches) {
-      blinkRed();
-      delay(250);
-      blinkRed();
-      delay(250);
+      for (int i = 0; i < 2; i += 1) {
+        blinkRed();
+        delay(250);
+      }
+    } else if (patternPosition == patternLength) {
+      // if player has input all the pattern correctly
+      // celebrate!
+      for (int i = 0; i < 5; i += 1) {
+        runPurple();
+      }
     }
     // if more than 1 life, decrease number of lives
     // if only 1 life left, then play the death pattern
@@ -181,6 +187,15 @@ void blinkRed() {
     strip.setPixelColor(i, 0);
   }
   strip.show();
+}
+
+void runPurple() {
+  for (int i = 0; i < N_LEDS + 4; i += 1) {
+    strip.setPixelColor(i, strip.Color(128, 0, 128)); // Draw new pixel
+    strip.setPixelColor(i - 4, 0); // Erase pixel a few steps back
+    strip.show();
+    delay(25);
+  }
 }
 
 // function to reset entire game
