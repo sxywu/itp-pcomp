@@ -16,8 +16,8 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-// set LED colors to red, green, blue
-const uint32_t ledColors[3] = {strip.Color(255, 0, 0), strip.Color(0, 255, 0), strip.Color(0, 0, 255)};
+// set LED colors to yellow, green, red
+const uint32_t ledColors[3] = {strip.Color(255, 128, 0), strip.Color(0, 255, 0), strip.Color(255, 0, 0)};
 // array of input button pins
 const int buttonPins[buttonLength] = {13, 12, 11};
 
@@ -57,6 +57,16 @@ void loop() {
     int buttonReading = digitalRead(buttonPins[i]);
     
     if (buttonReading != prevButtonState[i]) {
+      // if button state has changed, light up LED accordingly
+      if (buttonReading == HIGH) {
+        // if button is pressed, we want to turn on pixel
+        strip.setPixelColor(i, ledColors[i]);
+      } else if (buttonReading == LOW) {
+        // if button is released, turn off pixel
+        strip.setPixelColor(i, 0);
+      }
+      strip.show();
+      
       Serial.print(buttonPins[i]);
       Serial.print(" is ");
       Serial.println(buttonReading);
