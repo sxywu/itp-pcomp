@@ -12,11 +12,14 @@
 #define PIN      3
 #define N_LEDS 12
 #define patternLength 6
+#define buttonLength 3
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
 // set LED colors to red, green, blue
 const uint32_t ledColors[3] = {strip.Color(255, 0, 0), strip.Color(0, 255, 0), strip.Color(0, 0, 255)};
+// array of input button pins
+const int buttonPins[buttonLength] = {13, 12, 11};
 
 // declare arrays to store state for
 // 1. the pattern (length 6 of integers)
@@ -24,10 +27,15 @@ int pattern[patternLength];
 // 2. the player's input pattern so far (max length 6 of integers)
 // 3. an integer starting at 2 of how many lives left
 // 4. previous input button states (length 3 of booleans, defaulting to false at start)
+int prevButtonState[buttonLength] = {LOW, LOW, LOW};
 
 void setup() {
   // begin Neopixel strip
   strip.begin();
+  // set button pin modes
+  for (int i = 0; i < buttonLength; i += 1) {
+    pinMode(buttonPins[i], INPUT);
+  }
 
   Serial.begin(9600);
 }
@@ -37,14 +45,26 @@ void loop() {
   // if it is, call resetGame(), return
 
   // if pattern is empty, setup pattern
-  if (checkArrayEmpty(pattern)) {
-    setupPattern();
-  }
+//  if (checkArrayEmpty(pattern)) {
+//    setupPattern();
+//  }
 
   // loop through all 3 input buttons and see if any were pressed
   // that weren't already pressed.
   // store new button states in button state array
   // light up corresponding light for each pressed button
+  for (int i = 0; i < buttonLength; i += 1) {
+    int buttonReading = digitalRead(buttonPins[i]);
+    
+    if (buttonReading != prevButtonState[i]) {
+      Serial.print(buttonPins[i]);
+      Serial.print(" is ");
+      Serial.println(buttonReading);
+    }
+
+    prevButtonState[i] = buttonReading;
+  }
+
 
   // if more than one button is pressed at a time,
   // treat that as incorrect and they lose a life
@@ -70,7 +90,7 @@ void clearNeopixel() {
   for (int i = 0; i < N_LEDS; i += 1) {
     strip.setPixelColor(i, 0);
   }
-  
+
   strip.show();
 }
 
@@ -93,11 +113,11 @@ void setupPattern() {
   for (int i = 0; i < patternLength; i += 1) {
     int ledIndex = random(0, 3072) / 1024;
     pattern[i] = ledIndex;
-    
+
     Serial.print(ledIndex);
     Serial.print("\t");
     Serial.println(pattern[i]);
-    
+
     // light up LED
     strip.setPixelColor(ledIndex, ledColors[ledIndex]);
     strip.show();
