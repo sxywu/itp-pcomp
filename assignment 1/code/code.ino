@@ -14,6 +14,7 @@
 #define patternLength 6
 #define buttonLength 3
 #define totalLives 3
+#define resetPin 2
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -33,6 +34,8 @@ int patternPosition = 0;
 int numLives = 3;
 // # previous input button states (length 3 of booleans, defaulting to false at start)
 int prevButtonState[buttonLength] = {LOW, LOW, LOW};
+// previous reset button state
+int prevResetState = LOW;
 
 void setup() {
   // begin Neopixel strip
@@ -41,6 +44,7 @@ void setup() {
   for (int i = 0; i < buttonLength; i += 1) {
     pinMode(buttonPins[i], INPUT);
   }
+  pinMode(resetPin, INPUT);
 
   Serial.begin(9600);
 }
@@ -48,6 +52,15 @@ void setup() {
 void loop() {
   // check if reset button is pressed
   // if it is, call resetGame(), return
+  int resetReading = digitalRead(resetPin);
+  if (resetReading != prevResetState) {
+    if (resetReading == LOW) {
+      // if reset button was pressed and released
+      resetGame();
+      Serial.println("reset");
+    }
+  }
+  prevResetState = resetReading;
 
   //   if pattern is empty, setup pattern
   if (checkArrayEmpty(pattern)) {
@@ -96,7 +109,7 @@ void loop() {
     inputPattern[patternPosition] = buttonPressed - 1;
     patternPosition += 1;
     boolean matches = checkPlayerPattern();
-   
+
     if (!matches) {
       // if pattern is wrong, blink red
       for (int i = 0; i < 1; i += 1) {
@@ -106,17 +119,26 @@ void loop() {
 
       // then check number of lives left
       numLives -= 1;
-      lightupLives();
+
+      if (numLives == 0) {
+        // if no more lives, blink red 3 times
+        for (int i = 0; i < 3; i += 1) {
+          blinkRed();
+          delay(250);
+        }
+        resetGame();
+      } else {
+        lightupLives();
+      }
     } else if (patternPosition == patternLength) {
       // if player has input all the pattern correctly
       // celebrate!
       for (int i = 0; i < 5; i += 1) {
         runPurple();
+        // then reset game
+        resetGame();
       }
     }
-    // if more than 1 life, decrease number of lives
-    // if only 1 life left, then play the death pattern
-    // reset game
   }
 }
 
@@ -180,7 +202,7 @@ boolean checkPlayerPattern() {
 }
 
 void lightupLives() {
-  for(int i = 0; i < totalLives; i += 1) {
+  for (int i = 0; i < totalLives; i += 1) {
     if (i < numLives) {
       // light up that LED
       strip.setPixelColor(i + 4, strip.Color(0, 0, 255));
@@ -214,9 +236,21 @@ void runPurple() {
   }
 }
 
+void resetArray(int arr[]) {
+  for (int i = 0; i < patternLength; i += 1) {
+    arr[i] = 0;
+  }
+}
+
 // function to reset entire game
 void resetGame() {
   // set pattern and input array to empty
   // set number of lives back to 2
   // set button states all back to false
+  resetArray(pattern);
+  resetArray(inputPattern);
+  patternPosition = 0;
+  numLives = 3;
+
+  delay(1000);
 }
