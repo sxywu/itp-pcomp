@@ -10,16 +10,16 @@
 #include <Adafruit_NeoPixel.h>
 
 #define PIN      3
-#define N_LEDS 12
+#define N_LEDS 7
 #define patternLength 6
 #define buttonLength 3
 #define totalLives 3
-#define resetPin 2
+#define resetPin 8
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-// set LED colors to yellow, green, red
-const uint32_t ledColors[3] = {strip.Color(255, 128, 0), strip.Color(0, 255, 0), strip.Color(255, 0, 0)};
+// set LED colors to red, green, yellow
+const uint32_t ledColors[3] = {strip.Color(255, 0, 0), strip.Color(0, 255, 0),  strip.Color(255, 128, 0)};
 // array of input button pins
 const int buttonPins[buttonLength] = {13, 12, 11};
 
@@ -33,18 +33,19 @@ int patternPosition = 0;
 // # an integer starting at 2 of how many lives left
 int numLives = 3;
 // # previous input button states (length 3 of booleans, defaulting to false at start)
-int prevButtonState[buttonLength] = {LOW, LOW, LOW};
+// BECAUSE WE'RE USING PULLUP, THE READINGS ARE REVERSED, unpressed is HIGH
+int prevButtonState[buttonLength] = {HIGH, HIGH, HIGH};
 // previous reset button state
-int prevResetState = LOW;
+int prevResetState = HIGH;
 
 void setup() {
   // begin Neopixel strip
   strip.begin();
   // set button pin modes
   for (int i = 0; i < buttonLength; i += 1) {
-    pinMode(buttonPins[i], INPUT);
+    pinMode(buttonPins[i], INPUT_PULLUP);
   }
-  pinMode(resetPin, INPUT);
+  pinMode(resetPin, INPUT_PULLUP);
 
   Serial.begin(9600);
 }
@@ -54,8 +55,8 @@ void loop() {
   // if it is, call resetGame(), return
   int resetReading = digitalRead(resetPin);
   if (resetReading != prevResetState) {
-    if (resetReading == LOW) {
-      // if reset button was pressed and released
+    if (resetReading == HIGH) {
+      // if reset button was pressed (LOW) and released (HIGH)
       resetGame();
       Serial.println("reset");
     }
@@ -79,14 +80,14 @@ void loop() {
 
     if (buttonReading != prevButtonState[i]) {
       // if button state has changed, light up LED accordingly
-      if (buttonReading == HIGH) {
+      if (buttonReading == LOW) {
         // if button is pressed, we want to turn on pixel
-        strip.setPixelColor(i, ledColors[i]);
+        strip.setPixelColor(i + 1, ledColors[i]);
         // and remember it was pressed
         buttonPressed = i + 1;
-      } else if (buttonReading == LOW) {
+      } else if (buttonReading == HIGH) {
         // if button is released, turn off pixel
-        strip.setPixelColor(i, 0);
+        strip.setPixelColor(i + 1, 0);
       }
       strip.show();
 
@@ -128,6 +129,10 @@ void loop() {
         }
         resetGame();
       } else {
+        // reset player input pattern & position
+        resetArray(inputPattern);
+        patternPosition = 0;
+        // update lives
         lightupLives();
       }
     } else if (patternPosition == patternLength) {
@@ -135,9 +140,10 @@ void loop() {
       // celebrate!
       for (int i = 0; i < 5; i += 1) {
         runPurple();
-        // then reset game
-        resetGame();
       }
+
+      // then reset game
+      resetGame();
     }
   }
 }
@@ -173,11 +179,11 @@ void setupPattern() {
     Serial.println(pattern[i]);
 
     // light up LED
-    strip.setPixelColor(ledIndex, ledColors[ledIndex]);
+    strip.setPixelColor(ledIndex + 1, ledColors[ledIndex]);
     strip.show();
     // wait 500ms, then turn it off
     delay(500);
-    strip.setPixelColor(ledIndex, 0); // turn off
+    strip.setPixelColor(ledIndex + 1, 0); // turn off
     strip.show();
     delay(250);
   }
@@ -205,7 +211,7 @@ void lightupLives() {
   for (int i = 0; i < totalLives; i += 1) {
     if (i < numLives) {
       // light up that LED
-      strip.setPixelColor(i + 4, strip.Color(0, 0, 255));
+      strip.setPixelColor(i + 4, strip.Color(128, 0, 128)); // purple
     } else {
       // clear LED
       strip.setPixelColor(i + 4, 0);
