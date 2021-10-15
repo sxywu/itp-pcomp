@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    {# load p5 and p5.serialport #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/p5.serialserver@0.0.28/lib/p5.serialport.js"
+    ></script>
+    {# lodash for utility/convenience #}
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
+    ></script>
+  </head>
+  <body>
+    <script>
+      let serial = new p5.SerialPort();
+      let portName;
+
+      // first search for correct port
+      serial.on("list", (ports) => {
+        // ports is an array of port names
+        // so search for the one that includes "usbmodem"
+        portName = _.find(ports, (port) => _.includes(port, "usbmodem"));
+        // once we have the correct port, open serial connection
+        serial.open(portName);
+      });
+
+      serial.on("open", () => {
+        console.log(`port ${portName} open!`);
+      });
+
+      serial.list();
+    </script>
+  </body>
+</html>
