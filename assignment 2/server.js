@@ -1,9 +1,11 @@
 // const http = require("http");
 // const express = require("express");
-const fs = require("fs");
-const _ = require("lodash");
-const { send } = require("process");
-const SerialPort = require("serialport");
+import fs from "fs";
+import csvjson from "csvjson";
+import _ from "lodash";
+import * as d3 from "d3";
+
+import SerialPort from "serialport";
 let myPort;
 
 // const server = express();
