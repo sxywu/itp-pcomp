@@ -13,22 +13,32 @@ let myPort;
 
 // prepare data
 const today = new Date();
-let data = fs.readFileSync("data.csv", { encoding: "utf-8" }).split("\r\n");
-const keys = data[0].split(",");
-data = _.chain(data)
-  .tail() // take out the first row which is the header
-  .map((day) => {
-    // convert data into JSON
-    return _.chain(day.split(","))
-      .map((value, i) => {
-        const key = keys[i];
-        return [key, key === "date" ? new Date(value) : !!value];
-      })
-      .fromPairs()
-      .value();
-  })
-  .value();
-console.log(data);
+let data = fs.readFileSync("data.csv", { encoding: "utf-8" });
+data = csvjson.toSchemaObject(data); // convert to json
+const keys = _.keys(data[0]);
+// backfill any missing dates
+const mostRecent = new Date(_.last(data).date);
+_.each(d3.timeDay.range(mostRecent, today), (date) => {
+  // create row data
+  const d = _.reduce(
+    keys,
+    (obj, key) => {
+      obj[key] = key === "date" ? d3.timeFormat("%Y-%m-%d")(date) : 0;
+      return obj;
+    },
+    {}
+  );
+  // push in row
+  data.push(d);
+});
+
+// and then save
+function saveData() {
+  // convert back to CSV and save
+  const csvData = csvjson.toCSV(data, { headers: "key" });
+  fs.writeFileSync("data.csv", csvData, { encoding: "utf-8" });
+}
+saveData();
 
 // convert day of week to being Monday start
 function convertDay(day) {
@@ -50,10 +60,6 @@ function sendData() {
 }
 
 // sendData();
-
-function saveData() {
-  // convert back to CSV and save
-}
 
 function receiveData(data) {
   console.log(data, data.toString());
