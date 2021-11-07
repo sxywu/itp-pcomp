@@ -4,6 +4,7 @@ import fs from "fs";
 import csvjson from "csvjson";
 import _ from "lodash";
 import * as d3 from "d3";
+const formatDate = d3.utcFormat("%Y-%m-%d");
 
 import SerialPort from "serialport";
 let myPort;
@@ -12,18 +13,20 @@ let myPort;
 // const httpServer = http.createServer(server)
 
 // prepare data
-const today = new Date();
+const today = d3.utcDay(new Date());
+const todayStr = formatDate(today);
+
 let data = fs.readFileSync("data.csv", { encoding: "utf-8" });
 data = csvjson.toSchemaObject(data); // convert to json
 const keys = _.keys(data[0]);
 // backfill any missing dates
 const mostRecent = new Date(_.last(data).date);
-_.each(d3.timeDay.range(mostRecent, today), (date) => {
+_.each(d3.utcDay.range(mostRecent, today), (date) => {
   // create row data
   const d = _.reduce(
     keys,
     (obj, key) => {
-      obj[key] = key === "date" ? d3.timeFormat("%Y-%m-%d")(date) : 0;
+      obj[key] = key === "date" ? formatDate(date) : 0;
       return obj;
     },
     {}
@@ -40,36 +43,50 @@ function saveData() {
 }
 saveData();
 
-// convert day of week to being Monday start
-function convertDay(day) {
-  day = day.getDay() - 1;
-  return day < 0 ? 6 : day;
-}
-
 function sendData() {
-  const day = convertDay(today);
-  const dayRow = _.times(7, (i) => +(i === day));
-  console.log(dayRow);
-  const dataRows = _.chain(data)
-    .takeRight(day + 1)
-    .map(({ lunch, dinner, other }) => [+lunch, +dinner, +other])
+  // send as a string of 21 0 and 1s
+  // where first 7 is the days of week
+  // second set of 7 is lunch
+  // and last set is dinner
+  const monday = d3.utcMonday.floor(today);
+  const week = _.filter(data, ({ date }) => new Date(date) >= monday);
+
+  const str = _.chain(keys)
+    .map((key) => {
+      return _.times(7, (i) => {
+        // if in future return 0 for everything
+        if (!week[i]) return 0;
+        const d = week[i][key];
+
+        if (key === "date") {
+          return +(d === todayStr);
+        }
+        return +d;
+      });
+    })
     .flatten()
-    .value();
-  console.log(dataRows);
-  // myPort.write();
+    .value()
+    .join(",");
+
+  myPort.write(str);
 }
 
-// sendData();
+function updateData(option) {
+  // get today's data and update it
+  option = keys[+option];
+  const d = +_.last(data)[option];
+  _.last(data)[option] = +!d;
+
+  saveData();
+}
 
 function receiveData(data) {
-  console.log(data, data.toString());
   data = data.toString();
   if (data === "ready") {
     // Arduino is ready, send day & data back
     sendData();
   } else {
-    // receiving updates in format: date,option,true/false
-    const [day, option, boolean] = data.split(",");
+    updateData(data);
   }
 }
 
