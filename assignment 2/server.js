@@ -51,7 +51,7 @@ function sendData() {
   const monday = d3.utcMonday.floor(today);
   const week = _.filter(data, ({ date }) => new Date(date) >= monday);
 
-  const str = _.chain(keys)
+  let str = _.chain(keys)
     .map((key) => {
       return _.times(7, (i) => {
         // if in future return 0 for everything
@@ -65,9 +65,8 @@ function sendData() {
       });
     })
     .flatten()
-    .value()
-    .join(",");
-
+    .value();
+  str = JSON.stringify(str);
   myPort.write(str);
 }
 
@@ -81,12 +80,14 @@ function updateData(option) {
 }
 
 function receiveData(data) {
-  data = data.toString();
+  data = data.toString().trim();
   if (data === "ready") {
     // Arduino is ready, send day & data back
     sendData();
-  } else {
+  } else if (0 < +data && +data < 3) {
+    // either lunch or dinner
     updateData(data);
+    sendData();
   }
 }
 
