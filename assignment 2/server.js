@@ -20,8 +20,8 @@ let data = fs.readFileSync("data.csv", { encoding: "utf-8" });
 data = csvjson.toSchemaObject(data); // convert to json
 const keys = _.keys(data[0]);
 // backfill any missing dates
-const mostRecent = new Date(_.last(data).date);
-_.each(d3.utcDay.range(mostRecent, today), (date) => {
+const mostRecent = d3.utcDay.offset(new Date(_.last(data).date), 1); // most recent day + 1
+_.each(d3.utcDay.range(mostRecent, d3.utcDay.offset(today, 1)), (date) => {
   // create row data
   const d = _.reduce(
     keys,

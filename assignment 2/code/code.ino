@@ -11,7 +11,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_JSON.h>
 
-#define LED_PIN      2
+#define LED_PIN      5
 #define N_LEDS 21
 #define numButtons 2
 #define numDays 7
@@ -19,7 +19,7 @@
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, LED_PIN, NEO_GRBW + NEO_KHZ800);
 
 // option of lunch & dinner
-const int allButtons[numButtons] = {21, 17};
+const int allButtons[numButtons] = {3, 2};
 const uint32_t lightColors[numButtons + 1] = { strip.Color(128, 0, 128), strip.Color(255, 255, 0),  strip.Color(0, 128, 255)};
 
 int prevButtonState[numButtons] = {HIGH, HIGH};
