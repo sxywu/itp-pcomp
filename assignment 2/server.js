@@ -53,7 +53,7 @@ function sendData() {
 
   let str = _.chain(keys)
     .map((key) => {
-      return _.times(7, (i) => {
+      const lights = _.times(7, (i) => {
         // if in future return 0 for everything
         if (!week[i]) return 0;
         const d = week[i][key];
@@ -63,6 +63,10 @@ function sendData() {
         }
         return +d;
       });
+
+      // second row (lunch) is reversed because that is how
+      // the Neopixels are wired
+      return key === "lunch" ? lights.reverse() : lights;
     })
     .flatten()
     .value();
