@@ -8,7 +8,7 @@
 // array of sensor pins
 const int sensorPins[numSensors] = {17, 21};
 // array of default/normalized sensor readings
-int sensorDefaults[numSensors];
+int sensorLows[numSensors];
 // remember reset button state (HIGH bc pullup resistor)
 int prevButtonState = HIGH;
 
@@ -17,6 +17,8 @@ void setup() {
   pinMode(buttonPin, INPUT_PULLUP);
 
   Serial.begin(9600);
+
+  resetSensorValues();
 }
 
 void loop() {
@@ -39,21 +41,21 @@ void resetSensorValues() {
       int brightness = analogRead(sensorPin);
 
       if (i == 0) {
-        // if first reading, remember it in sensorDefaults
-        sensorDefaults[sensor] = brightness;
+        // if first reading, remember it in sensorLows
+        sensorLows[sensor] = brightness;
       } else {
         // else set it to average of prev and current value
-        sensorDefaults[sensor] = (sensorDefaults[sensor] + brightness) / 2;
+        sensorLows[sensor] = (sensorLows[sensor] + brightness) / 2;
       }
 
 //      Serial.print(brightness);
 //      Serial.print("\t");
-//      Serial.println(sensorDefaults[sensor]);
+//      Serial.println(sensorLows[sensor]);
     }
     delay(100);
   }
 
-//  Serial.print(sensorDefaults[0]);
+//  Serial.print(sensorLows[0]);
 //  Serial.print(", ");
-//  Serial.println(sensorDefaults[1]);
+//  Serial.println(sensorLows[1]);
 }
