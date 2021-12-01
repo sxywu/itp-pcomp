@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/p5.serialserver@0.0.28/lib/p5.serialport.js"
+    ></script>
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
+    ></script>
+
+    <style>
+      canvas {
+        display: inline-block;
+        width: 1024px;
+        height: 1024px;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="1024" height="1024"></canvas>
+
+    <script>
+      // set up serial
+      let serial = new p5.SerialPort();
+      let portName;
+      // set up canvas
+      const size = 1024;
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // first search for correct port
+      serial.on("list", (ports) => {
+        // ports is an array of port names
+        // so search for the one that includes "usbmodem"
+        portName = _.find(ports, (port) => _.includes(port, "usbmodem"));
+        // once we have the correct port, open serial connection
+        serial.open(portName);
+      });
+
+      serial.on("open", () => {
+        console.log(`port ${portName} open!`);
+      });
+
+      serial.on("data", () => {
+        let data = serial.readLine();
+        if (!data) return;
+
+        data = data.split(",").map((d) => +d);
+
+        ctx.clearRect(0, 0, size, size);
+
+        _.each(data, (percent, i) => {
+          const x = i * 0.5 * size + 0.25 * size;
+          const y = size / 2;
+          const r = size / 4;
+          // draw a dot at the location
+          // ctx.beginPath();
+          // ctx.arc(x, y, r, 0, 2 * Math.PI, 0);
+          // ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x, y, (r * percent) / 100, 0, 2 * Math.PI, 0);
+          ctx.fill();
+        });
+      });
+
+      serial.list();
+    </script>
+  </body>
+</html>
