@@ -29,9 +29,15 @@
   </head>
   <body>
     <div id="container">
-      <video src="1.mov" width="300px" style="left: 117px"></video>
-      <video src="2.mov" style="width: 300px; left: 406px"></video>
-      <video src="3.mov" style="width: 300px; left: 690px"></video>
+      <video
+        src="2.mov"
+        style="width: 339px; left: 604px; bottom: 129px; z-index: 50"
+      ></video>
+      <video src="3.mov" style="width: 234px; left: 346px; z-index: 0"></video
+      ><video
+        src="1.mov"
+        style="left: -22px; width: 400px; bottom: 160px; z-index: 100"
+      ></video>
     </div>
 
     <script>
@@ -58,10 +64,7 @@
         let data = serial.readLine();
         if (!data) return;
 
-        data = data
-          .split(",")
-          .map((d) => +d)
-          .reverse();
+        data = data.split(",").map((d) => +d);
 
         _.each(data, (d, i) => {
           const video = videos[i];
