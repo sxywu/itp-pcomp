@@ -2,17 +2,17 @@
 // send the change in brightness to Serial
 
 // 5 photoresistors, 1 button for resetting
-#define numSensors 2
+#define numSensors 3
 #define buttonPin 2
 // how much to increase/decrease by
 #define margin 2
 
 // array of sensor pins
-const int sensorPins[numSensors] = {17, 21};
+const int sensorPins[numSensors] = {14, 17, 20};
 // array of default/normalized sensor readings
 int sensorLows[numSensors];
 // array of flower animation percentages
-int animationPercents[numSensors] = {0, 0};
+int animationPercents[numSensors];
 // remember reset button state (HIGH bc pullup resistor)
 int prevButtonState = HIGH;
 

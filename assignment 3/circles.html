@@ -15,25 +15,31 @@
     ></script>
 
     <style>
-      canvas {
-        display: inline-block;
-        width: 1024px;
-        height: 1024px;
-        margin: auto;
+      body {
+        background-color: #000;
+        margin: 0;
+        padding: 0;
+      }
+
+      video {
+        position: absolute;
+        bottom: 0;
       }
     </style>
   </head>
   <body>
-    <canvas width="1024" height="1024"></canvas>
+    <div id="container">
+      <video src="1.mov" width="300px" style="left: 117px"></video>
+      <video src="2.mov" style="width: 300px; left: 406px"></video>
+      <video src="3.mov" style="width: 300px; left: 690px"></video>
+    </div>
 
     <script>
       // set up serial
       let serial = new p5.SerialPort();
       let portName;
-      // set up canvas
-      const size = 1024;
-      const canvas = document.querySelector("canvas");
-      const ctx = canvas.getContext("2d");
+      const videos = document.querySelectorAll("video");
+      console.log(videos);
 
       // first search for correct port
       serial.on("list", (ports) => {
@@ -52,22 +58,15 @@
         let data = serial.readLine();
         if (!data) return;
 
-        data = data.split(",").map((d) => +d);
+        data = data
+          .split(",")
+          .map((d) => +d)
+          .reverse();
 
-        ctx.clearRect(0, 0, size, size);
-
-        _.each(data, (percent, i) => {
-          const x = i * 0.5 * size + 0.25 * size;
-          const y = size / 2;
-          const r = size / 4;
-          // draw a dot at the location
-          // ctx.beginPath();
-          // ctx.arc(x, y, r, 0, 2 * Math.PI, 0);
-          // ctx.stroke();
-
-          ctx.beginPath();
-          ctx.arc(x, y, (r * percent) / 100, 0, 2 * Math.PI, 0);
-          ctx.fill();
+        _.each(data, (d, i) => {
+          const video = videos[i];
+          const time = _.round((d / 100) * video.duration, 3);
+          video.currentTime = time;
         });
       });
 
